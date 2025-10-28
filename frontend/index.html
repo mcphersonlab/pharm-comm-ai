@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharm Comm AI - Vaccine Communication Training</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏥 Pharm Comm AI</h1>
+            <p class="subtitle">AI-Powered Training for Vaccine Communication</p>
+        </header>
+
+        <!-- Persona Selection -->
+        <div id="persona-selection" class="section">
+            <h2>Select Patient Persona</h2>
+            <div class="persona-grid">
+                <div class="persona-card" data-persona="default">
+                    <h3>Alex - General Concerns</h3>
+                    <p>Cautious patient worried about side effects and safety</p>
+                    <button class="btn-primary">Start Conversation</button>
+                </div>
+                <div class="persona-card" data-persona="safety_concerned">
+                    <h3>Sarah - Safety First</h3>
+                    <p>Skeptical about long-term effects and testing procedures</p>
+                    <button class="btn-primary">Start Conversation</button>
+                </div>
+                <div class="persona-card" data-persona="natural_immunity">
+                    <h3>Michael - Natural Immunity</h3>
+                    <p>Confident in natural immunity, questions necessity</p>
+                    <button class="btn-primary">Start Conversation</button>
+                </div>
+                <div class="persona-card" data-persona="side_effects">
+                    <h3>Jennifer - Allergies</h3>
+                    <p>Anxious about side effects and allergic reactions</p>
+                    <button class="btn-primary">Start Conversation</button>
+                </div>
+                <div class="persona-card" data-persona="misinformation">
+                    <h3>Robert - Misinformation</h3>
+                    <p>Distrustful, influenced by conspiracy theories</p>
+                    <button class="btn-primary">Start Conversation</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversation Interface -->
+        <div id="conversation-interface" class="section" style="display: none;">
+            <div class="conversation-header">
+                <h2>Conversation with <span id="patient-name">Patient</span></h2>
+                <button id="end-session-btn" class="btn-secondary">End Session</button>
+            </div>
+
+            <div class="main-content">
+                <!-- Chat Area -->
+                <div class="chat-section">
+                    <div id="chat-container" class="chat-container">
+                        <!-- Messages will be added here dynamically -->
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="input-area">
+                        <div class="input-controls">
+                            <button id="voice-btn" class="btn-icon" title="Voice Input">
+                                🎤
+                            </button>
+                            <textarea 
+                                id="message-input" 
+                                placeholder="Type your response to the patient..."
+                                rows="3"
+                            ></textarea>
+                            <button id="send-btn" class="btn-primary">Send</button>
+                        </div>
+                        <div id="voice-status" class="voice-status" style="display: none;">
+                            <span class="recording-indicator">🔴 Recording...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Panel -->
+                <div class="feedback-section">
+                    <h3>Real-Time Feedback</h3>
+                    <div id="feedback-content">
+                        <p class="feedback-placeholder">Your feedback will appear here after each response.</p>
+                    </div>
+
+                    <!-- Score Display -->
+                    <div id="score-display" style="display: none;">
+                        <div class="score-item">
+                            <label>Empathy</label>
+                            <div class="score-bar">
+                                <div id="empathy-bar" class="score-fill"></div>
+                            </div>
+                            <span id="empathy-score" class="score-value">0%</span>
+                        </div>
+                        <div class="score-item">
+                            <label>Accuracy</label>
+                            <div class="score-bar">
+                                <div id="accuracy-bar" class="score-fill"></div>
+                            </div>
+                            <span id="accuracy-score" class="score-value">0%</span>
+                        </div>
+                        <div class="score-item">
+                            <label>Clarity</label>
+                            <div class="score-bar">
+                                <div id="clarity-bar" class="score-fill"></div>
+                            </div>
+                            <span id="clarity-score" class="score-value">0%</span>
+                        </div>
+                    </div>
+
+                    <div id="feedback-details" style="display: none;">
+                        <h4>Detailed Feedback</h4>
+                        <div id="feedback-text"></div>
+                        
+                        <div id="suggestions-section" style="display: none;">
+                            <h4>💡 Suggestions</h4>
+                            <div id="suggestions-list"></div>
+                        </div>
+
+                        <div id="strengths-section" style="display: none;">
+                            <h4>✨ Strengths</h4>
+                            <div id="strengths-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Modal -->
+        <div id="summary-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Session Summary</h2>
+                <div id="summary-content"></div>
+                <button id="close-summary-btn" class="btn-primary">Start New Session</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
