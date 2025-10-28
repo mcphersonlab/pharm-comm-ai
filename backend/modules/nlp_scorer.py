@@ -149,7 +149,7 @@ class NLPScorer:
             score -= 0.3
         
         # Boost for mentioning specific data/numbers
-        if re.search(r'\d+%|\d+ percent|study|trial', message_lower):
+        if re.search(r'\d+%|\d+ percent', message_lower) or 'study' in message_lower or 'trial' in message_lower:
             score += 0.15
         
         # Check for hedging language (shows appropriate caution)

@@ -52,7 +52,7 @@ def start_session():
         })
     except Exception as e:
         logger.error(f"Error starting session: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': 'Failed to start session'}), 500
 
 
 @app.route('/api/send-message', methods=['POST'])
@@ -88,7 +88,7 @@ def send_message():
         })
     except Exception as e:
         logger.error(f"Error processing message: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': 'Failed to process message'}), 500
 
 
 @app.route('/api/end-session', methods=['POST'])
@@ -112,7 +112,7 @@ def end_session():
         })
     except Exception as e:
         logger.error(f"Error ending session: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': 'Failed to end session'}), 500
 
 
 @app.route('/api/transcribe-speech', methods=['POST'])
@@ -136,8 +136,10 @@ def transcribe_speech():
         })
     except Exception as e:
         logger.error(f"Error transcribing speech: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': 'Failed to transcribe speech'}), 500
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    import os
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)
