@@ -1,6 +1,10 @@
 # Pharm Comm AI - AI-Powered Training Module
 
+[![Deploy to GitHub Pages](https://github.com/mcphersonlab/pharm-comm-ai/actions/workflows/pages.yml/badge.svg)](https://github.com/mcphersonlab/pharm-comm-ai/actions/workflows/pages.yml)
+
 Interactive AI module training pharmacy students to counsel vaccine-resistant patients through simulated dialogue and automated evaluation.
+
+**🌐 [View Live Demo](https://mcphersonlab.github.io/pharm-comm-ai/)**
 
 ## Features
 
