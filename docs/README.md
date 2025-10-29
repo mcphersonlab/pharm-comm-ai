@@ -1,5 +1,7 @@
 # GitHub Pages - Pharm Comm AI
 
+[![Deploy to GitHub Pages](https://github.com/mcphersonlab/pharm-comm-ai/actions/workflows/pages.yml/badge.svg)](https://github.com/mcphersonlab/pharm-comm-ai/actions/workflows/pages.yml)
+
 This directory contains the static website for the Pharm Comm AI project, deployed via GitHub Pages.
 
 ## About
