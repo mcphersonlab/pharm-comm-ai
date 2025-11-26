@@ -60,6 +60,19 @@ body {
     opacity: 0.8;
 }
 
+.nav-cta {
+    background: white !important;
+    color: #667eea !important;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.nav-cta:hover {
+    opacity: 0.9 !important;
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+}
+
 /* Hero Section */
 .hero {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -346,11 +359,82 @@ section h2 {
     background: white;
 }
 
+/* Try Now Section */
+.try-now-section {
+    margin-bottom: 2rem;
+}
+
+.try-now-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 3rem;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.try-now-card h3 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+}
+
+.try-now-card p {
+    font-size: 1.125rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.95;
+}
+
+.btn-cta {
+    background: white !important;
+    color: #667eea !important;
+    font-size: 1.125rem;
+    padding: 1rem 2.5rem;
+}
+
+.btn-cta:hover {
+    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.3);
+    transform: translateY(-3px);
+}
+
+.or-divider {
+    display: flex;
+    align-items: center;
+    margin: 3rem 0;
+}
+
+.or-divider::before,
+.or-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.or-divider span {
+    padding: 0 1.5rem;
+    color: #718096;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.local-install-header {
+    text-align: center;
+    font-size: 1.5rem;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.local-install-subtitle {
+    text-align: center;
+    color: #718096;
+    margin-bottom: 2rem;
+}
+
 .install-steps {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 2rem;
-    margin-top: 3rem;
+    margin-top: 1rem;
 }
 
 .install-card {
