@@ -86,10 +86,10 @@ class NLPScorer {
         const messageLower = message.toLowerCase();
         let score = 0.5; // Base score
 
-        // Check for empathy keywords
+        // Check for empathy keywords (already lowercase)
         let empathyCount = 0;
         for (const keyword of this.empathyKeywords) {
-            if (messageLower.includes(keyword.toLowerCase())) {
+            if (messageLower.includes(keyword)) {
                 empathyCount++;
             }
         }
@@ -132,11 +132,11 @@ class NLPScorer {
         const messageLower = message.toLowerCase();
         let score = 0.5; // Base score
 
-        // Check for accurate information
+        // Check for accurate information (keywords already lowercase)
         let accurateKeywords = 0;
         for (const category of Object.values(this.accuracyKeywords)) {
             for (const keyword of category) {
-                if (messageLower.includes(keyword.toLowerCase())) {
+                if (messageLower.includes(keyword)) {
                     accurateKeywords++;
                 }
             }
@@ -145,10 +145,10 @@ class NLPScorer {
         // Boost for accurate information (up to 0.4)
         score += Math.min(0.4, accurateKeywords * 0.08);
 
-        // Check for misinformation red flags
+        // Check for misinformation red flags (already lowercase)
         let misinformationCount = 0;
         for (const flag of this.misinformationFlags) {
-            if (messageLower.includes(flag.toLowerCase())) {
+            if (messageLower.includes(flag)) {
                 misinformationCount++;
             }
         }

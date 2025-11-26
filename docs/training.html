@@ -74,18 +74,19 @@
                     <!-- Input Area -->
                     <div class="input-area">
                         <div class="input-controls">
-                            <button id="voice-btn" class="btn-icon" title="Voice Input">
+                            <button id="voice-btn" class="btn-icon" title="Voice Input" aria-label="Start voice input">
                                 🎤
                             </button>
                             <textarea 
                                 id="message-input" 
                                 placeholder="Type your response to the patient..."
                                 rows="3"
+                                aria-label="Type your response to the patient"
                             ></textarea>
                             <button id="send-btn" class="btn-primary">Send</button>
                         </div>
                         <div id="voice-status" class="voice-status" style="display: none;">
-                            <span class="recording-indicator">🔴 Recording...</span>
+                            <span class="recording-indicator" aria-live="polite">🔴 Recording...</span>
                         </div>
                     </div>
                 </div>
