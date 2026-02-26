@@ -1,9 +1,16 @@
 /**
  * Conversation Simulator Module (Client-side)
  * Manages patient personas and generates realistic vaccine-hesitant patient responses.
+ * When an OpenAI-compatible API key is stored in localStorage the patient persona is
+ * powered by a lightweight LLM; otherwise a rule-based fallback is used.
  */
 
 class ConversationSimulator {
+    // Number of recent conversation turns to include in LLM context
+    static _LLM_CONTEXT_TURNS = 4;
+    static _LLM_MAX_TOKENS = 100;
+    static _LLM_TEMPERATURE = 0.7;
+
     constructor() {
         this.sessions = {};
         this.personas = this._initializePersonas();
@@ -204,6 +211,124 @@ class ConversationSimulator {
         }
 
         return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // -----------------------------------------------------------------------
+    // LLM integration
+    // -----------------------------------------------------------------------
+
+    /**
+     * Build the system prompt for the LLM based on the current persona state.
+     * @param {object} persona - Persona definition
+     * @param {number} openness - Current openness level (0-1)
+     * @returns {string} System prompt
+     */
+    _buildSystemPrompt(persona, openness) {
+        const level = openness < 0.35 ? 'very resistant'
+            : (openness < 0.65 ? 'somewhat open' : 'fairly open');
+        return `You are ${persona.name}, a vaccine-hesitant patient. ` +
+            `Personality: ${persona.personality}. ` +
+            `Main concerns: ${persona.concerns.join(', ')}. ` +
+            `You are currently ${level} to being convinced. ` +
+            'Reply in 1-2 short sentences, staying in character. ' +
+            'Do not repeat yourself. Do not give medical advice.';
+    }
+
+    /**
+     * Call an OpenAI-compatible chat completions endpoint.
+     * Reads config from localStorage keys: openai_api_key, openai_base_url, openai_model.
+     * @param {object} session - Current session
+     * @param {string} studentMessage - The student's latest message
+     * @returns {Promise<string>} LLM response text
+     */
+    async _callLLM(session, studentMessage) {
+        const apiKey = localStorage.getItem('openai_api_key') || '';
+        if (!apiKey) throw new Error('No API key configured');
+
+        const baseUrl = (localStorage.getItem('openai_base_url') || 'https://api.openai.com/v1').replace(/\/$/, '');
+        const model = localStorage.getItem('openai_model') || 'gpt-4o-mini';
+
+        const systemPrompt = this._buildSystemPrompt(session.persona, session.opennessLevel);
+        const messages = [{ role: 'system', content: systemPrompt }];
+
+        const recentHistory = session.conversationHistory.slice(-(ConversationSimulator._LLM_CONTEXT_TURNS * 2));
+        for (const turn of recentHistory) {
+            messages.push({
+                role: turn.speaker === 'patient' ? 'assistant' : 'user',
+                content: turn.message
+            });
+        }
+        messages.push({ role: 'user', content: studentMessage });
+
+        const resp = await fetch(`${baseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({ model, messages, max_tokens: ConversationSimulator._LLM_MAX_TOKENS, temperature: ConversationSimulator._LLM_TEMPERATURE })
+        });
+
+        if (!resp.ok) {
+            const errText = await resp.text().catch(() => String(resp.status));
+            throw new Error(`LLM API error ${resp.status}: ${errText}`);
+        }
+
+        const data = await resp.json();
+        return data.choices[0].message.content.trim();
+    }
+
+    /**
+     * Async version of getResponse that uses the LLM when an API key is
+     * configured, falling back to the rule-based engine on failure or when
+     * no key is present.
+     * @param {string} sessionId - Session ID
+     * @param {string} studentMessage - The student's message
+     * @param {object} scores - NLP scores
+     * @returns {Promise<string>} Patient response
+     */
+    async getResponseAsync(sessionId, studentMessage, scores) {
+        if (!this.sessions[sessionId]) {
+            throw new Error('Invalid session ID');
+        }
+
+        const session = this.sessions[sessionId];
+        session.turnCount += 1;
+
+        session.conversationHistory.push({
+            speaker: 'student',
+            message: studentMessage,
+            timestamp: new Date().toISOString()
+        });
+        session.scoresHistory.push(scores);
+
+        const empathyScore = scores.empathy || 0.5;
+        const accuracyScore = scores.accuracy || 0.5;
+        if (empathyScore > 0.7 && accuracyScore > 0.6) {
+            session.opennessLevel = Math.min(1.0, session.opennessLevel + 0.15);
+        } else if (empathyScore < 0.4) {
+            session.opennessLevel = Math.max(0.0, session.opennessLevel - 0.1);
+        }
+
+        let response;
+        if (localStorage.getItem('openai_api_key')) {
+            try {
+                response = await this._callLLM(session, studentMessage);
+            } catch (e) {
+                console.warn('LLM call failed, using rule-based fallback:', e.message);
+                response = this._generateContextualResponse(session, studentMessage, scores);
+            }
+        } else {
+            response = this._generateContextualResponse(session, studentMessage, scores);
+        }
+
+        session.conversationHistory.push({
+            speaker: 'patient',
+            message: response,
+            timestamp: new Date().toISOString()
+        });
+
+        return response;
     }
 
     /**
