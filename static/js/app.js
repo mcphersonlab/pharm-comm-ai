@@ -43,12 +43,24 @@ class PharmCommApp {
 
         this.recognition.onend = () => {
             if (this.isListening) {
-                this.recognition.start();
+                try {
+                    this.recognition.start();
+                } catch (e) {
+                    // Transient race condition (e.g. start called while still stopping);
+                    // isListening stays true so the next onend will retry the restart.
+                    // Fatal errors that require stopping are handled in onerror.
+                }
             }
         };
 
         this.recognition.onerror = (event) => {
-            if (event.error !== 'no-speech') {
+            const fatalErrors = ['not-allowed', 'audio-capture', 'service-not-allowed'];
+            if (fatalErrors.includes(event.error)) {
+                this.isListening = false;
+                document.getElementById('voice-status').style.display = 'none';
+                document.getElementById('voice-btn').textContent = '🎤';
+                console.error('Speech recognition fatal error:', event.error);
+            } else if (event.error !== 'no-speech') {
                 console.error('Speech recognition error:', event.error);
             }
         };
@@ -131,6 +143,8 @@ class PharmCommApp {
     }
 
     async sendMessage() {
+        if (!this.sessionId) return;
+
         const input = document.getElementById('message-input');
         const message = input.value.trim();
 
@@ -141,6 +155,8 @@ class PharmCommApp {
         if (wasListening) {
             this.isListening = false;
             this.recognition.stop();
+            document.getElementById('voice-status').style.display = 'none';
+            document.getElementById('voice-btn').textContent = '🎤';
         }
 
         // Add student message to chat
@@ -193,7 +209,12 @@ class PharmCommApp {
             // Resume voice listening after patient finishes for ongoing dialogue
             if (wasListening) {
                 this.isListening = true;
-                this.recognition.start();
+                try {
+                    this.recognition.start();
+                } catch (e) {
+                    // Transient race condition; onend will trigger a restart
+                    // since isListening is true. Fatal errors are handled in onerror.
+                }
                 document.getElementById('voice-status').style.display = 'block';
                 document.getElementById('voice-btn').textContent = '⏹️';
             }
@@ -490,7 +511,8 @@ class PharmCommApp {
         // Clear feedback
         document.getElementById('score-display').style.display = 'none';
         document.getElementById('feedback-details').style.display = 'none';
-        document.querySelector('.feedback-placeholder').style.display = 'block';
+        const placeholder = document.querySelector('.feedback-placeholder');
+        if (placeholder) placeholder.style.display = 'block';
     }
 
     getPersonaName(persona) {

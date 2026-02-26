@@ -18,6 +18,11 @@ class NLPScorer:
             nltk.data.find('vader_lexicon')
         except LookupError:
             nltk.download('vader_lexicon', quiet=True)
+
+        try:
+            nltk.data.find('tokenizers/punkt_tab')
+        except LookupError:
+            nltk.download('punkt_tab', quiet=True)
         
         self.sia = SentimentIntensityAnalyzer()
         
