@@ -81,6 +81,41 @@ header h1 {
     color: #667eea;
 }
 
+.nav-btn {
+    background: none;
+    cursor: pointer;
+    font-size: inherit;
+    font-family: inherit;
+}
+
+/* Settings form */
+.settings-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.settings-field label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95em;
+}
+
+.settings-input {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95em;
+    width: 100%;
+    transition: border-color 0.2s ease;
+}
+
+.settings-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
 /* Section */
 .section {
     background: var(--card-bg);

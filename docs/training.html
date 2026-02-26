@@ -16,6 +16,7 @@
             </div>
             <nav class="header-nav">
                 <a href="index.html" class="nav-link">← Back to Home</a>
+                <button id="llm-settings-btn" class="nav-link nav-btn">⚙️ LLM Settings</button>
             </nav>
         </header>
 
@@ -137,6 +138,35 @@
                             <div id="strengths-list"></div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LLM Settings Modal -->
+        <div id="llm-settings-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>⚙️ LLM Settings</h2>
+                <p style="margin-bottom: 20px; color: var(--text-secondary);">
+                    Configure an OpenAI-compatible API to power patient personas with a language model.
+                    Leave the API Key blank to use rule-based responses instead.
+                    <strong>Note:</strong> The key is stored in your browser's localStorage and is only sent to the configured API endpoint.
+                </p>
+                <div class="settings-field">
+                    <label for="api-key-input">API Key</label>
+                    <input type="password" id="api-key-input" class="settings-input" placeholder="sk-..." autocomplete="off"
+                           aria-label="OpenAI-compatible API key">
+                </div>
+                <div class="settings-field">
+                    <label for="base-url-input">Base URL <span style="font-weight:normal;">(optional, for local/custom endpoints)</span></label>
+                    <input type="text" id="base-url-input" class="settings-input" placeholder="https://api.openai.com/v1">
+                </div>
+                <div class="settings-field">
+                    <label for="model-input">Model <span style="font-weight:normal;">(optional)</span></label>
+                    <input type="text" id="model-input" class="settings-input" placeholder="gpt-4o-mini">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button id="save-settings-btn" class="btn-primary">Save</button>
+                    <button id="close-settings-btn" class="btn-secondary">Cancel</button>
                 </div>
             </div>
         </div>

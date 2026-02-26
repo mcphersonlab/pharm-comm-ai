@@ -18,9 +18,52 @@ class PharmCommApp {
 
     init() {
         this.setupEventListeners();
+        this.loadLLMSettings();
+    }
+
+    loadLLMSettings() {
+        const keyEl = document.getElementById('api-key-input');
+        const baseUrlEl = document.getElementById('base-url-input');
+        const modelEl = document.getElementById('model-input');
+        if (!keyEl || !baseUrlEl || !modelEl) return;
+        keyEl.value = localStorage.getItem('openai_api_key') || '';
+        baseUrlEl.value = localStorage.getItem('openai_base_url') || '';
+        modelEl.value = localStorage.getItem('openai_model') || '';
     }
 
     setupEventListeners() {
+        // LLM settings
+        document.getElementById('llm-settings-btn').addEventListener('click', () => {
+            this.loadLLMSettings();
+            document.getElementById('llm-settings-modal').style.display = 'flex';
+        });
+
+        document.getElementById('save-settings-btn').addEventListener('click', () => {
+            const key = document.getElementById('api-key-input').value.trim();
+            const baseUrl = document.getElementById('base-url-input').value.trim();
+            const model = document.getElementById('model-input').value.trim();
+            if (key) {
+                localStorage.setItem('openai_api_key', key);
+            } else {
+                localStorage.removeItem('openai_api_key');
+            }
+            if (baseUrl) {
+                localStorage.setItem('openai_base_url', baseUrl);
+            } else {
+                localStorage.removeItem('openai_base_url');
+            }
+            if (model) {
+                localStorage.setItem('openai_model', model);
+            } else {
+                localStorage.removeItem('openai_model');
+            }
+            document.getElementById('llm-settings-modal').style.display = 'none';
+        });
+
+        document.getElementById('close-settings-btn').addEventListener('click', () => {
+            document.getElementById('llm-settings-modal').style.display = 'none';
+        });
+
         // Persona selection
         document.querySelectorAll('.persona-card button').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -88,7 +131,7 @@ class PharmCommApp {
         }
     }
 
-    sendMessage() {
+    async sendMessage() {
         const input = document.getElementById('message-input');
         const message = input.value.trim();
 
@@ -109,8 +152,8 @@ class PharmCommApp {
             // Score the message using client-side NLP
             const scores = this.nlpScorer.scoreMessage(message, this.sessionId);
 
-            // Get patient response
-            const patientResponse = this.conversationSim.getResponse(this.sessionId, message, scores);
+            // Get patient response (uses LLM when configured, rule-based fallback otherwise)
+            const patientResponse = await this.conversationSim.getResponseAsync(this.sessionId, message, scores);
 
             // Generate feedback
             const feedback = this.feedbackGen.generateFeedback(message, scores);
