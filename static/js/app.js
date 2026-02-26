@@ -8,12 +8,50 @@ class PharmCommApp {
         this.sessionId = null;
         this.currentPersona = null;
         this.apiBase = window.location.origin;
+        this.recognition = null;
+        this.isListening = false;
+        this.finalTranscript = '';
         
         this.init();
     }
 
     init() {
         this.setupEventListeners();
+        this.setupSpeechRecognition();
+    }
+
+    setupSpeechRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        this.recognition = new SpeechRecognition();
+        this.recognition.continuous = true;
+        this.recognition.interimResults = true;
+        this.recognition.lang = 'en-US';
+
+        this.recognition.onresult = (event) => {
+            let interim = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                if (event.results[i].isFinal) {
+                    this.finalTranscript += event.results[i][0].transcript;
+                } else {
+                    interim += event.results[i][0].transcript;
+                }
+            }
+            document.getElementById('message-input').value = this.finalTranscript + interim;
+        };
+
+        this.recognition.onend = () => {
+            if (this.isListening) {
+                this.recognition.start();
+            }
+        };
+
+        this.recognition.onerror = (event) => {
+            if (event.error !== 'no-speech') {
+                console.error('Speech recognition error:', event.error);
+            }
+        };
     }
 
     setupEventListeners() {
@@ -98,16 +136,27 @@ class PharmCommApp {
 
         if (!message) return;
 
+        // Pause continuous voice listening while the patient "speaks"
+        const wasListening = this.isListening;
+        if (wasListening) {
+            this.isListening = false;
+            this.recognition.stop();
+        }
+
         // Add student message to chat
         this.addMessage('student', message);
 
-        // Clear input
+        // Clear input and transcript buffer
         input.value = '';
+        this.finalTranscript = '';
 
         // Disable send button while processing
         const sendBtn = document.getElementById('send-btn');
         sendBtn.disabled = true;
         sendBtn.textContent = 'Sending...';
+
+        // Show patient typing indicator immediately
+        this.showTypingIndicator();
 
         try {
             const response = await fetch(`${this.apiBase}/api/send-message`, {
@@ -124,20 +173,30 @@ class PharmCommApp {
             const data = await response.json();
 
             if (data.success) {
-                // Add patient response
-                this.addMessage('patient', data.patient_message);
+                // Stream patient response word by word
+                await this.addMessageStreaming('patient', data.patient_message);
 
                 // Update feedback display
                 this.updateFeedback(data.scores, data.feedback);
             } else {
+                this.hideTypingIndicator();
                 alert('Error: ' + data.error);
             }
         } catch (error) {
+            this.hideTypingIndicator();
             console.error('Error:', error);
             alert('Failed to send message. Please try again.');
         } finally {
             sendBtn.disabled = false;
             sendBtn.textContent = 'Send';
+
+            // Resume voice listening after patient finishes for ongoing dialogue
+            if (wasListening) {
+                this.isListening = true;
+                this.recognition.start();
+                document.getElementById('voice-status').style.display = 'block';
+                document.getElementById('voice-btn').textContent = '⏹️';
+            }
         }
     }
 
@@ -160,6 +219,66 @@ class PharmCommApp {
 
         // Scroll to bottom
         chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    showTypingIndicator() {
+        const chatContainer = document.getElementById('chat-container');
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message patient-message';
+        typingDiv.id = 'typing-indicator';
+
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'message-header';
+        headerDiv.textContent = '🏥 Patient';
+
+        const indicatorDiv = document.createElement('div');
+        indicatorDiv.className = 'typing-indicator';
+        indicatorDiv.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+
+        typingDiv.appendChild(headerDiv);
+        typingDiv.appendChild(indicatorDiv);
+        chatContainer.appendChild(typingDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    hideTypingIndicator() {
+        const indicator = document.getElementById('typing-indicator');
+        if (indicator) indicator.remove();
+    }
+
+    addMessageStreaming(speaker, content) {
+        this.hideTypingIndicator();
+
+        const chatContainer = document.getElementById('chat-container');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${speaker}-message`;
+
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'message-header';
+        headerDiv.textContent = speaker === 'patient' ? '🏥 Patient' : '👨‍⚕️ You';
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+
+        messageDiv.appendChild(headerDiv);
+        messageDiv.appendChild(contentDiv);
+        chatContainer.appendChild(messageDiv);
+
+        const words = content.split(' ');
+        let wordIndex = 0;
+
+        return new Promise((resolve) => {
+            const interval = setInterval(() => {
+                if (wordIndex < words.length) {
+                    contentDiv.textContent += (wordIndex > 0 ? ' ' : '') + words[wordIndex];
+                    wordIndex++;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                } else {
+                    clearInterval(interval);
+                    resolve();
+                }
+            }, 80);
+        });
     }
 
     updateFeedback(scores, feedback) {
@@ -329,28 +448,36 @@ class PharmCommApp {
     }
 
     toggleVoiceInput() {
+        if (!this.recognition) {
+            alert('Speech recognition is not supported in this browser. Please try Chrome or Edge.');
+            return;
+        }
+
         const voiceStatus = document.getElementById('voice-status');
         const voiceBtn = document.getElementById('voice-btn');
 
-        if (voiceStatus.style.display === 'none') {
-            // Start recording (placeholder for actual implementation)
+        if (!this.isListening) {
+            this.isListening = true;
+            this.finalTranscript = '';
+            this.recognition.start();
             voiceStatus.style.display = 'block';
             voiceBtn.textContent = '⏹️';
-            
-            // In a real implementation, this would use Web Speech API or a similar service
-            alert('Voice input is a placeholder feature. In production, this would use the Web Speech API or integrate with a speech-to-text service.');
-            
-            // Auto-stop after showing alert
-            voiceStatus.style.display = 'none';
-            voiceBtn.textContent = '🎤';
         } else {
-            // Stop recording
+            this.isListening = false;
+            this.recognition.stop();
             voiceStatus.style.display = 'none';
             voiceBtn.textContent = '🎤';
         }
     }
 
     resetApp() {
+        // Stop voice recognition if active
+        if (this.isListening) {
+            this.isListening = false;
+            this.recognition.stop();
+            document.getElementById('voice-btn').textContent = '🎤';
+        }
+
         document.getElementById('summary-modal').style.display = 'none';
         document.getElementById('conversation-interface').style.display = 'none';
         document.getElementById('persona-selection').style.display = 'block';
@@ -358,6 +485,7 @@ class PharmCommApp {
         // Reset state
         this.sessionId = null;
         this.currentPersona = null;
+        this.finalTranscript = '';
 
         // Clear feedback
         document.getElementById('score-display').style.display = 'none';
