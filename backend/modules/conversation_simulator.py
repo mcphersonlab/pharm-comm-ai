@@ -1,19 +1,46 @@
 """
 Conversation Simulator Module
 Manages patient personas and generates realistic vaccine-hesitant patient responses.
+When OPENAI_API_KEY is set the patient persona is powered by a lightweight LLM;
+otherwise a rule-based fallback is used.
 """
 
+import os
 import uuid
 from datetime import datetime
 import random
+import logging
+
+try:
+    from openai import OpenAI
+    _openai_available = True
+except ImportError:
+    _openai_available = False
+
+logger = logging.getLogger(__name__)
 
 
 class ConversationSimulator:
     """Simulates conversations with vaccine-hesitant patients."""
-    
+
+    # Number of recent conversation turns to include in LLM context
+    _LLM_CONTEXT_TURNS = 4
+
     def __init__(self):
         self.sessions = {}
         self.personas = self._initialize_personas()
+        self._llm_client = self._init_llm_client()
+
+    def _init_llm_client(self):
+        """Initialize the OpenAI-compatible LLM client if credentials are available."""
+        api_key = os.environ.get('OPENAI_API_KEY')
+        if not api_key or not _openai_available:
+            return None
+        base_url = os.environ.get('OPENAI_BASE_URL')
+        kwargs = {'api_key': api_key}
+        if base_url:
+            kwargs['base_url'] = base_url
+        return OpenAI(**kwargs)
     
     def _initialize_personas(self):
         """Define different patient personas with varying concerns."""
@@ -137,6 +164,50 @@ class ConversationSimulator:
         return response
     
     def _generate_contextual_response(self, session, student_message, scores):
+        """Generate a contextual patient response, using LLM when available."""
+        if self._llm_client is not None:
+            try:
+                return self._generate_llm_response(session, student_message)
+            except Exception as exc:
+                logger.warning("LLM call failed, falling back to rule-based response: %s", exc)
+        return self._generate_rule_based_response(session, student_message, scores)
+
+    def _build_llm_system_prompt(self, persona, openness):
+        """Build a minimal system prompt that describes the patient persona."""
+        level = "very resistant" if openness < 0.35 else ("somewhat open" if openness < 0.65 else "fairly open")
+        return (
+            f"You are {persona['name']}, a vaccine-hesitant patient. "
+            f"Personality: {persona['personality']}. "
+            f"Main concerns: {', '.join(persona['concerns'])}. "
+            f"You are currently {level} to being convinced. "
+            "Reply in 1-2 short sentences, staying in character. "
+            "Do not repeat yourself. Do not give medical advice."
+        )
+
+    def _generate_llm_response(self, session, student_message):
+        """Call the LLM to generate a patient response."""
+        persona = session['persona']
+        model = os.environ.get('OPENAI_MODEL', 'gpt-4o-mini')
+        system_prompt = self._build_llm_system_prompt(persona, session['openness_level'])
+
+        # Build a short message history (system + last N turns + new student turn)
+        messages = [{'role': 'system', 'content': system_prompt}]
+        # Each turn contains one student message and one patient message (2 entries each)
+        recent_turns = session['conversation_history'][-(self._LLM_CONTEXT_TURNS * 2):]
+        for turn in recent_turns:
+            role = 'assistant' if turn['speaker'] == 'patient' else 'user'
+            messages.append({'role': role, 'content': turn['message']})
+        messages.append({'role': 'user', 'content': student_message})
+
+        response = self._llm_client.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_tokens=100,
+            temperature=0.7,
+        )
+        return response.choices[0].message.content.strip()
+
+    def _generate_rule_based_response(self, session, student_message, scores):
         """Generate a contextual patient response."""
         persona = session['persona']
         openness = session['openness_level']

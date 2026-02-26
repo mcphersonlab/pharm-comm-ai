@@ -65,6 +65,24 @@ pkill -f "python app.py"
 python -c "import nltk; nltk.download('vader_lexicon')"
 ```
 
+## LLM-Powered Patient Persona (Optional)
+
+By default the patient responds using a lightweight rule-based engine.
+Set the `OPENAI_API_KEY` environment variable to activate an LLM-backed persona instead:
+
+```bash
+export OPENAI_API_KEY=sk-...
+python app.py
+```
+
+Two additional variables let you point to a different model or provider:
+
+| Variable | Default | Description |
+|---|---|---|
+| `OPENAI_API_KEY` | *(none)* | Enables LLM mode when set |
+| `OPENAI_MODEL` | `gpt-4o-mini` | Model name to use |
+| `OPENAI_BASE_URL` | *(OpenAI default)* | Override API base URL (e.g. for Ollama or other OpenAI-compatible servers) |
+
 ## Need Help?
 
 See the full [README.md](README.md) for detailed documentation and API reference.
